@@ -1,16 +1,17 @@
 {
-  "name": "gdax-api",
+  "name": "gdax-cryptoexchange-api",
   "version": "0.0.1",
   "description": "Simple typescript interface to the GDAX cryptoexchange.",
-  "main": "index.js",
+  "main": "dist/es6/index.js",
+  "types": "dist/es6/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "drive": "npm run build && node dist/es6/driver.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rm -rf dist",
+    "test": ""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/haleyga/gdax-api.git"
+    "url": "git+https://github.com/haleyga/gdax-cryptoexchange-api.git"
   },
   "keywords": [
     "crypto",
@@ -27,9 +28,9 @@
   "author": "Graham Haley",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/haleyga/gdax-api/issues"
+    "url": "https://github.com/haleyga/gdax-cryptoexchange-api/issues"
   },
-  "homepage": "https://github.com/haleyga/gdax-api#readme",
+  "homepage": "https://github.com/haleyga/gdax-cryptoexchange-api#readme",
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/chai": "^4.0.0",

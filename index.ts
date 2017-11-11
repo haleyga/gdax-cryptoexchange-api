@@ -23,7 +23,7 @@ const defaultAgentConfig = {
     baseURL: defaultConfig.rootUrl,
     headers: {
         'Content-Type': 'application/json',
-        'User-Agent'  : `GDAX API Client (gdax-api node package)`,
+        'User-Agent'  : `GDAX API Client (gdax-cryptoexchange-api node package)`,
     },
     method : 'GET',
     timeout: defaultConfig.timeout,
