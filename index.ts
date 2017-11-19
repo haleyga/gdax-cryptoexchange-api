@@ -351,7 +351,7 @@ export type ICreateReportParams = {
     email?: string,
 };
 
-export type IGetProductOrderBookParams = { level: number };
+export type IGetProductOrderBookParams = { level?: number };
 export type IGetHistoricRatesParams = { start: string, end: string, granularity: number };
 
 export interface IGdaxClient {
