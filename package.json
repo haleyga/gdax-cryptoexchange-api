@@ -1,6 +1,6 @@
 {
   "name": "gdax-cryptoexchange-api",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Simple typescript interface to the GDAX cryptoexchange.",
   "main": "dist/es6/index.js",
   "types": "dist/es6/index.d.ts",

@@ -114,15 +114,21 @@ export type IApiAuth = { publicKey: string; privateKey: string; passphrase: stri
 export interface IRawAgent {
     auth?: IApiAuth;
 
-    deleteFromPrivateEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse>;
+    deleteFromPrivateEndpoint(endpoint: string,
+                              queryParams?: IQueryParams,
+                              config?: IGdaxRequestConfig): Promise<IGdaxResponse>;
 
     isUpgraded(): boolean;
 
-    getFromPrivateEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse>;
+    getFromPrivateEndpoint(endpoint: string,
+                           queryParams?: IQueryParams,
+                           config?: IGdaxRequestConfig): Promise<IGdaxResponse>;
 
-    getPublicEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse>;
+    getPublicEndpoint(endpoint: string,
+                      queryParams?: IQueryParams,
+                      config?: IGdaxRequestConfig): Promise<IGdaxResponse>;
 
-    postToPrivateEndpoint(endpoint: string, data?: IPostBody): Promise<IGdaxResponse>;
+    postToPrivateEndpoint(endpoint: string, data?: IPostBody, config?: IGdaxRequestConfig): Promise<IGdaxResponse>;
 
     signMessage(privateKey: string, path: string, method: string, body?: IPostBody): ISignature;
 
@@ -147,9 +153,12 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
      *
      * @param {string} endpoint
      * @param {IQueryParams} queryParams
+     * @param config
      * @returns {Promise<IGdaxResponse>}
      */
-    async deleteFromPrivateEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse> {
+    async deleteFromPrivateEndpoint(endpoint: string,
+                                    queryParams?: IQueryParams,
+                                    config: IGdaxRequestConfig = null): Promise<IGdaxResponse> {
 
         // Ensure the user has credentials
         if (!this.isUpgraded()) return Promise.reject(`api keys are required to access private endpoints`);
@@ -166,10 +175,11 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
+            ...config.headers,
         };
 
         // Construct the actual config to be used
-        const agentConfig = { ...privateAgentConfig, headers, method: 'DELETE', url: uri };
+        const agentConfig = { ...privateAgentConfig, headers, method: 'DELETE', url: uri, ...config };
 
         try {
             const response = await axios(agentConfig);
@@ -188,9 +198,12 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
      *
      * @param {string} endpoint
      * @param queryParams
+     * @param config
      * @returns {Promise<IGdaxResponse>}
      */
-    async getFromPrivateEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse> {
+    async getFromPrivateEndpoint(endpoint: string,
+                                 queryParams?: IQueryParams,
+                                 config: IGdaxRequestConfig = null): Promise<IGdaxResponse> {
 
         // Ensure the user has credentials
         if (!this.isUpgraded()) return Promise.reject(`api keys are required to access private endpoints`);
@@ -207,10 +220,11 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
+            ...config.headers,
         };
 
         // Construct the actual config to be used
-        const agentConfig = { ...privateAgentConfig, headers, method: 'GET', url: uri };
+        const agentConfig = { ...privateAgentConfig, headers, method: 'GET', url: uri, ...config };
 
         try {
             const response = await axios(agentConfig);
@@ -229,15 +243,18 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
      *
      * @param {string} endpoint
      * @param {{}} queryParams
+     * @param config
      * @returns {Promise<IGdaxResponse>}
      */
-    async getPublicEndpoint(endpoint: string, queryParams?: IQueryParams): Promise<IGdaxResponse> {
+    async getPublicEndpoint(endpoint: string,
+                            queryParams?: IQueryParams,
+                            config: IGdaxRequestConfig = null): Promise<IGdaxResponse> {
 
         // The uri is a relative path to the publicAgentConfig baseUrl
         const uri = `/${endpoint}?${qs.stringify(queryParams)}`;
 
         // Construct the actual config to be used
-        const agentConfig = { ...publicAgentConfig, url: uri };
+        const agentConfig = { ...publicAgentConfig, url: uri, ...config };
 
         try {
             // Send the request.
@@ -257,9 +274,12 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
      *
      * @param {string} endpoint
      * @param {IPostBody} data
+     * @param config
      * @returns {Promise<IGdaxResponse>}
      */
-    async postToPrivateEndpoint(endpoint: string, data?: IPostBody): Promise<IGdaxResponse> {
+    async postToPrivateEndpoint(endpoint: string,
+                                data?: IPostBody,
+                                config: IGdaxRequestConfig = null): Promise<IGdaxResponse> {
 
         // Ensure the user has credentials
         if (!this.isUpgraded()) return Promise.reject(`api keys are required to access private endpoints`);
@@ -276,10 +296,11 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
+            ...config.headers,
         };
 
         // Construct the actual config to be used
-        const agentConfig = { ...privateAgentConfig, headers, url: uri, data };
+        const agentConfig = { ...privateAgentConfig, headers, url: uri, data, ...config };
 
         try {
             const response = await axios(agentConfig);
@@ -428,7 +449,7 @@ export interface IGdaxClient {
     getTrailingVolume(): Promise<IGdaxResponse>;
 }
 
-export const getClient = (auth?: IApiAuth): IGdaxClient => ({
+export const getClient = (auth?: IApiAuth, configOverride: IGdaxRequestConfig = null): IGdaxClient => ({
 
     rawAgent: getRawAgent(auth),
 
@@ -457,7 +478,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
     async getProductOrderBook(productId: string, bookParams?: IGetProductOrderBookParams): Promise<IGdaxResponse> {
         const params = bookParams || { level: 1 };
 
-        return this.rawAgent.getPublicEndpoint(`products/${productId}/book`, params);
+        return this.rawAgent.getPublicEndpoint(`products/${productId}/book`, params, configOverride);
     },
 
     /**
@@ -467,7 +488,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getProductTicker(productId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint(`products/${productId}/ticker`);
+        return this.rawAgent.getPublicEndpoint(`products/${productId}/ticker`, null, configOverride);
     },
 
     /**
@@ -478,7 +499,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getTrades(productId: string, paginationParams?: IPaginationParams): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint(`products/${productId}/trades`, paginationParams);
+        return this.rawAgent.getPublicEndpoint(`products/${productId}/trades`, paginationParams, configOverride);
     },
 
     /**
@@ -489,7 +510,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getHistoricRates(productId: string, params: IGetHistoricRatesParams): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint(`products/${productId}/candles`, params);
+        return this.rawAgent.getPublicEndpoint(`products/${productId}/candles`, params, configOverride);
     },
 
     /**
@@ -499,7 +520,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async get24HrStats(productId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint(`products/${productId}/stats`);
+        return this.rawAgent.getPublicEndpoint(`products/${productId}/stats`, null, configOverride);
     },
 
     /**
@@ -508,7 +529,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getCurrencies(): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint('currencies');
+        return this.rawAgent.getPublicEndpoint('currencies', null, configOverride);
     },
 
     /**
@@ -517,7 +538,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getServerTime(): Promise<IGdaxResponse> {
-        return this.rawAgent.getPublicEndpoint('time');
+        return this.rawAgent.getPublicEndpoint('time', null, configOverride);
     },
 
     // Authenticated
@@ -528,7 +549,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async listAccounts(): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint('accounts');
+        return this.rawAgent.getFromPrivateEndpoint('accounts', null, configOverride);
     },
 
     /**
@@ -538,7 +559,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getAccount(accountId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}`);
+        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}`, null, configOverride);
     },
 
     /**
@@ -551,7 +572,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getAccountHistory(accountId: string, paginationParams?: IPaginationParams): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}/ledger`, paginationParams);
+        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}/ledger`, paginationParams, configOverride);
     },
 
     /**
@@ -564,7 +585,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getHolds(accountId: string, paginationParams?: IPaginationParams): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}/holds`, paginationParams);
+        return this.rawAgent.getFromPrivateEndpoint(`accounts/${accountId}/holds`, paginationParams, configOverride);
     },
 
     /**
@@ -579,7 +600,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @param {INewOrderParams} params
      */
     async placeNewOrder(params: INewOrderParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('orders', params);
+        return this.rawAgent.postToPrivateEndpoint('orders', params, configOverride);
     },
 
     /**
@@ -592,7 +613,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async cancelOrder(orderId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.deleteFromPrivateEndpoint(`orders/${orderId}`);
+        return this.rawAgent.deleteFromPrivateEndpoint(`orders/${orderId}`, null, configOverride);
     },
 
     /**
@@ -602,7 +623,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async cancelAll(params?: ICancelOrderParams): Promise<IGdaxResponse> {
-        return this.rawAgent.deleteFromPrivateEndpoint('orders', params);
+        return this.rawAgent.deleteFromPrivateEndpoint('orders', params, configOverride);
     },
 
     /**
@@ -633,7 +654,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
         const pageParams  = qs.stringify(paginationParams);
         const queryString = [orderParams, pageParams].join('&');
 
-        return this.rawAgent.getFromPrivateEndpoint(`orders?${queryString}`);
+        return this.rawAgent.getFromPrivateEndpoint(`orders?${queryString}`, null, configOverride);
     },
 
     /**
@@ -643,7 +664,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<void>}
      */
     async getOrder(orderId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint(`orders/${orderId}`);
+        return this.rawAgent.getFromPrivateEndpoint(`orders/${orderId}`, null, configOverride);
     },
 
     /**
@@ -656,7 +677,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
     async listFills(listFillsParams?: IListFillsParams, paginationParams?: IPaginationParams): Promise<IGdaxResponse> {
         const params = { ...listFillsParams, ...paginationParams };
 
-        return this.rawAgent.getFromPrivateEndpoint('fills', params);
+        return this.rawAgent.getFromPrivateEndpoint('fills', params, configOverride);
     },
 
     /**
@@ -682,7 +703,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
         const pageParams    = qs.stringify(paginationParams);
         const queryString   = [fundingParams, pageParams].join('&');
 
-        return this.rawAgent.getFromPrivateEndpoint(`funding?${queryString}`);
+        return this.rawAgent.getFromPrivateEndpoint(`funding?${queryString}`, null, configOverride);
     },
 
     /**
@@ -692,7 +713,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async repay(params: IRepayParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('funding/repay', params);
+        return this.rawAgent.postToPrivateEndpoint('funding/repay', params, configOverride);
     },
 
     /**
@@ -707,7 +728,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async transferMarginFunds(params: ITransferMarginFundsParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('profiles/margin-transfer', params);
+        return this.rawAgent.postToPrivateEndpoint('profiles/margin-transfer', params, configOverride);
     },
 
     /**
@@ -716,7 +737,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getPosition(): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint('position');
+        return this.rawAgent.getFromPrivateEndpoint('position', null, configOverride);
     },
 
     /**
@@ -726,7 +747,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
     async closePosition(closePositionParams?: IClosePositionParams): Promise<IGdaxResponse> {
         const params = closePositionParams || { repay_only: false };
 
-        return this.rawAgent.postToPrivateEndpoint('position/close', params);
+        return this.rawAgent.postToPrivateEndpoint('position/close', params, configOverride);
     },
 
     /**
@@ -736,7 +757,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async depositFromPaymentMethod(params: IDepositFromPaymentMethodParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('deposits/payment-method', params);
+        return this.rawAgent.postToPrivateEndpoint('deposits/payment-method', params, configOverride);
     },
 
     /**
@@ -748,7 +769,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async depositFromCoinbaseAccount(params: IDepositFromCoinbaseAccountParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('deposits/coinbase-account', params);
+        return this.rawAgent.postToPrivateEndpoint('deposits/coinbase-account', params, configOverride);
     },
 
     /**
@@ -758,7 +779,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async withdrawToPaymentMethod(params: IWithdrawToPaymentMethodParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('withdrawals/coinbase-account', params);
+        return this.rawAgent.postToPrivateEndpoint('withdrawals/coinbase-account', params, configOverride);
     },
 
     /**
@@ -770,7 +791,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async withdrawToCoinbaseAccount(params: IWithdrawToCoinbaseAccountParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('withdrawals/coinbase-account', params);
+        return this.rawAgent.postToPrivateEndpoint('withdrawals/coinbase-account', params, configOverride);
     },
 
     /**
@@ -780,7 +801,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async withdrawToCryptoAddress(params: IWithdrawToCryptoAddressParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('withdrawals/crypto', params);
+        return this.rawAgent.postToPrivateEndpoint('withdrawals/crypto', params, configOverride);
     },
 
     /**
@@ -789,7 +810,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async listPaymentMethods(): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint('payment-methods');
+        return this.rawAgent.getFromPrivateEndpoint('payment-methods', null, configOverride);
     },
 
     /**
@@ -800,7 +821,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async listCoinbaseAccounts(): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint('coinbase-accounts');
+        return this.rawAgent.getFromPrivateEndpoint('coinbase-accounts', null, configOverride);
     },
 
     /**
@@ -810,7 +831,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async createReport(params: ICreateReportParams): Promise<IGdaxResponse> {
-        return this.rawAgent.postToPrivateEndpoint('reports', params);
+        return this.rawAgent.postToPrivateEndpoint('reports', params, configOverride);
     },
 
     /**
@@ -818,7 +839,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getReportStatus(reportId: string): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint(`reports/${reportId}`);
+        return this.rawAgent.getFromPrivateEndpoint(`reports/${reportId}`, null, configOverride);
     },
 
     /**
@@ -828,7 +849,7 @@ export const getClient = (auth?: IApiAuth): IGdaxClient => ({
      * @returns {Promise<IGdaxResponse>}
      */
     async getTrailingVolume(): Promise<IGdaxResponse> {
-        return this.rawAgent.getFromPrivateEndpoint('users/self/trailing-volume');
+        return this.rawAgent.getFromPrivateEndpoint('users/self/trailing-volume', null, configOverride);
     },
 });
 
