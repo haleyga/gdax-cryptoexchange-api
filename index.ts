@@ -168,6 +168,8 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
 
         const signatureData = signMessage(this.auth.privateKey, uri, 'DELETE');
 
+        const headersOverride = config ? config.headers : null;
+
         // Add the appropriate POST request headers (Key and Sign)
         const headers = {
             ...privateAgentConfig.headers,
@@ -175,7 +177,7 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
-            ...config.headers,
+            ...headersOverride,
         };
 
         // Construct the actual config to be used
@@ -213,6 +215,8 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
 
         const signatureData = signMessage(this.auth.privateKey, uri, 'GET');
 
+        const headersOverride = config ? config.headers : null;
+
         // Add the appropriate POST request headers (Key and Sign)
         const headers = {
             ...privateAgentConfig.headers,
@@ -220,7 +224,7 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
-            ...config.headers,
+            ...headersOverride,
         };
 
         // Construct the actual config to be used
@@ -289,6 +293,8 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
 
         const signatureData = signMessage(this.auth.privateKey, uri, 'POST', data);
 
+        const headersOverride = config ? config.headers : null;
+
         // Add the appropriate POST request headers (Key and Sign)
         const headers = {
             ...privateAgentConfig.headers,
@@ -296,7 +302,7 @@ const getRawAgent = (auth?: IApiAuth): IRawAgent => ({
             'CB-ACCESS-PASSPHRASE': this.auth.passphrase,
             'CB-ACCESS-SIGN'      : signatureData.digest,
             'CB-ACCESS-TIMESTAMP' : signatureData.timestamp,
-            ...config.headers,
+            ...headersOverride,
         };
 
         // Construct the actual config to be used
