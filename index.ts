@@ -20,13 +20,14 @@ const defaultConfig = {
  * Default HTTP agent configuration.
  */
 const defaultAgentConfig = {
-    baseURL: defaultConfig.rootUrl,
-    headers: {
+    baseURL       : defaultConfig.rootUrl,
+    headers       : {
         'Content-Type': 'application/json',
         'User-Agent'  : `GDAX API Client (gdax-cryptoexchange-api node package)`,
     },
-    method : 'GET',
-    timeout: defaultConfig.timeout,
+    method        : 'GET',
+    timeout       : defaultConfig.timeout,
+    validateStatus: () => true,
 };
 
 /**
